@@ -1,4 +1,5 @@
 """Check for remaining emojis in project files."""
+
 import re
 from pathlib import Path
 
@@ -12,22 +13,22 @@ emoji_pattern = re.compile(
     "\U0001F900-\U0001F9FF"  # supplemental symbols
     "\u2700-\u27BF"  # dingbats
     "\u2600-\u26FF"  # misc symbols
-    "]+", 
-    flags=re.UNICODE
+    "]+",
+    flags=re.UNICODE,
 )
 
 project_root = Path(__file__).parent.parent
 found_emojis = []
 
 # Check .py and .md files
-for ext in ['*.py', '*.md']:
+for ext in ["*.py", "*.md"]:
     for file_path in project_root.rglob(ext):
         # Skip venv and hidden folders
-        if any(part.startswith('.') or part == 'venv' for part in file_path.parts):
+        if any(part.startswith(".") or part == "venv" for part in file_path.parts):
             continue
-            
+
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
             matches = emoji_pattern.findall(content)
             if matches:
                 found_emojis.append((str(file_path.relative_to(project_root)), matches))

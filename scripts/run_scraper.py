@@ -1,4 +1,5 @@
 """ Run Scraper Script : Execute the SHL catalog scraper."""
+
 import sys
 from pathlib import Path
 

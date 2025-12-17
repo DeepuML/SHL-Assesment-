@@ -1,12 +1,13 @@
 """FastAPI Backend : RESTful API for SHL Assessment Recommendation System."""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
 import logging
 import sys
 from pathlib import Path
+from typing import List
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="SHL Assessment Recommendation API",
     description="Semantic search API for SHL assessments",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Enable CORS
@@ -36,25 +37,32 @@ app.add_middleware(
 # Initialize retrieval engine (loaded on startup)
 engine = None
 
+
 class RecommendRequest(BaseModel):
     """Request model for /recommend endpoint."""
+
     query: str
+
 
 class Assessment(BaseModel):
     """Assessment model."""
+
     assessment_name: str
     assessment_url: str
 
+
 class RecommendResponse(BaseModel):
     """Response model for /recommend endpoint."""
+
     recommendations: List[Assessment]
+
 
 @app.on_event("startup")
 async def startup_event():
     """Load models on startup."""
     global engine
     logger.info("Loading retrieval engine...")
-    
+
     try:
         engine = RetrievalEngine()
         engine.load()
@@ -63,48 +71,53 @@ async def startup_event():
         logger.error(f" Failed to load retrieval engine: {e}")
         raise
 
+
 @app.get("/health")
 async def health():
-    """ Health check endpoint.
-     Returns:
-        Health status
+    """Health check endpoint.
+    Returns:
+       Health status
     """
     return {"status": "ok"}
 
+
 @app.post("/recommend", response_model=RecommendResponse)
 async def recommend(request: RecommendRequest):
-    """Get assessment recommendations for a query. 
+    """Get assessment recommendations for a query.
     Args:
-        request: Request with query text    
+        request: Request with query text
     Returns:
         List of recommended assessments
     """
     if not engine:
         raise HTTPException(status_code=503, detail="Service not ready")
-    
+
     if not request.query or not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")
-    
+
     try:
         # Get recommendations
         recommendations = engine.recommend(request.query, k=10)
-        
+
         # Format response
         assessments = [
             Assessment(
-                assessment_name=rec['assessment_name'],
-                assessment_url=rec['assessment_url']
+                assessment_name=rec["assessment_name"],
+                assessment_url=rec["assessment_url"],
             )
             for rec in recommendations
         ]
-        
-        logger.info(f"Returned {len(assessments)} recommendations for query: {request.query[:50]}...")
-        
+
+        logger.info(
+            f"Returned {len(assessments)} recommendations for query: {request.query[:50]}..."
+        )
+
         return RecommendResponse(recommendations=assessments)
-        
+
     except Exception as e:
         logger.error(f"Error processing request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/")
 async def root():
@@ -115,10 +128,12 @@ async def root():
         "endpoints": {
             "/health": "Health check",
             "/recommend": "Get assessment recommendations (POST)",
-            "/docs": "API documentation"
-        }
+            "/docs": "API documentation",
+        },
     }
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

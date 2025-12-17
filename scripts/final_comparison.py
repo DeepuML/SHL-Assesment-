@@ -1,41 +1,38 @@
-import pandas as pd
 import json
+
+import pandas as pd
 
 print("=" * 80)
 print("FINAL MODEL COMPARISON - ALL APPROACHES")
 print("=" * 80)
 
 # Load all evaluation results
-with open('data/evaluation_results.json', 'r') as f:
+with open("data/evaluation_results.json", "r") as f:
     baseline = json.load(f)
 
-with open('data/evaluation_results_gemini.json', 'r') as f:
+with open("data/evaluation_results_gemini.json", "r") as f:
     gemini = json.load(f)
 
-with open('data/evaluation_results_gemini_enhanced.json', 'r') as f:
+with open("data/evaluation_results_gemini_enhanced.json", "r") as f:
     enhanced = json.load(f)
 
 # Create comparison table
 models = {
-    'Model': [
-        'MiniLM (Baseline)',
-        'Gemini (Original)', 
-        'Gemini (Enhanced)'
-    ],
-    'Embedding Dims': [384, 768, 768],
-    'Text Length': ['50-100 words', '50-100 words', '300-500 words'],
-    'Recall@10': [
+    "Model": ["MiniLM (Baseline)", "Gemini (Original)", "Gemini (Enhanced)"],
+    "Embedding Dims": [384, 768, 768],
+    "Text Length": ["50-100 words", "50-100 words", "300-500 words"],
+    "Recall@10": [
         f"{baseline['mean_recall']:.4f} ({baseline['mean_recall']*100:.2f}%)",
         f"{gemini['mean_recall']:.4f} ({gemini['mean_recall']*100:.2f}%)",
-        f"{enhanced['mean_recall']:.4f} ({enhanced['mean_recall']*100:.2f}%)"
+        f"{enhanced['mean_recall']:.4f} ({enhanced['mean_recall']*100:.2f}%)",
     ],
-    'vs Baseline': [
-        '0.0%',
+    "vs Baseline": [
+        "0.0%",
         f"{((gemini['mean_recall']-baseline['mean_recall'])/baseline['mean_recall']*100):+.1f}%",
-        f"{((enhanced['mean_recall']-baseline['mean_recall'])/baseline['mean_recall']*100):+.1f}%"
+        f"{((enhanced['mean_recall']-baseline['mean_recall'])/baseline['mean_recall']*100):+.1f}%",
     ],
-    'Cost': ['Free', '~$0.001', '~$0.001'],
-    'Speed': ['Fast (50ms)', 'Medium (200ms)', 'Medium (200ms)']
+    "Cost": ["Free", "~$0.001", "~$0.001"],
+    "Speed": ["Fast (50ms)", "Medium (200ms)", "Medium (200ms)"],
 }
 
 df = pd.DataFrame(models)

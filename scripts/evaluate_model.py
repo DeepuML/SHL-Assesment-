@@ -9,8 +9,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.retrieval_engine import RetrievalEngine
 from src.evaluation import Evaluator
+from src.retrieval_engine import RetrievalEngine
 
 
 def main():
@@ -18,22 +18,22 @@ def main():
     print("=" * 70)
     print("MODEL EVALUATION")
     print("=" * 70)
-    
+
     # Load retrieval engine
     print("\nLoading retrieval engine...")
     engine = RetrievalEngine()
     engine.load()
-    
+
     # Create evaluator
     evaluator = Evaluator(engine)
-    
+
     # Run evaluation
     print("\nRunning evaluation on training set...")
     results = evaluator.evaluate("data/train/train.csv", k=10)
-    
+
     # Save results
     evaluator.save_results(results, "data/evaluation_results.json")
-    
+
     # Print summary
     print("\n" + "=" * 70)
     print("EVALUATION SUMMARY")
