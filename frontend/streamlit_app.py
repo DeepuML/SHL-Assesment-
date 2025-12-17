@@ -1,41 +1,47 @@
-"""Streamlit Frontend : Web interface for SHL Assessment Recommendation System."""
+"""Streamlit App: Standalone SHL Assessment Recommendation System."""
 
 import sys
 from pathlib import Path
 
-import requests
 import streamlit as st
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Configure page
-st.set_page_config(page_title="SHL Assessment Recommender", page_icon="", layout="wide")
+st.set_page_config(page_title="SHL Assessment Recommender", page_icon="🎯", layout="wide")
 
-# API endpoint
-API_URL = "http://localhost:8000"
+# Load retrieval engine (cached to avoid reloading)
+@st.cache_resource
+def load_engine():
+    """Load retrieval engine once and cache it."""
+    from src.retrieval_engine import RetrievalEngine
+    return RetrievalEngine()
+
+# Initialize engine
+engine = load_engine()
 
 
 def get_recommendations(query: str):
-    """Get recommendations from API.
+    """Get recommendations directly from engine.
     Args:
         query: Search query
     Returns:
         List of recommendations or None if error
     """
     try:
-        response = requests.post(
-            f"{API_URL}/recommend", json={"query": query}, timeout=30
-        )
-        response.raise_for_status()
-        return response.json()["recommendations"]
-    except requests.exceptions.ConnectionError:
-        st.error(
-            " Cannot connect to API. Make sure the backend is running on port 8000."
-        )
-        return None
+        results = engine.recommend(query, k=10)
+        # Format results for display
+        recommendations = []
+        for res in results:
+            recommendations.append({
+                'assessment_name': res['assessment_name'],
+                'assessment_url': res['assessment_url'],
+                'similarity_score': res.get('similarity_score', 0)
+            })
+        return recommendations
     except Exception as e:
-        st.error(f" Error: {str(e)}")
+        st.error(f"⚠️ Error: {str(e)}")
         return None
 
 
@@ -118,34 +124,28 @@ def main():
 
     # Sidebar
     with st.sidebar:
-        st.header("ℹ About")
+        st.header("ℹ️ About")
         st.markdown(
             """This system uses **semantic search** and **AI-powered balancing** to recommend 
         relevant SHL assessments.
         
         ### Features:
-        -  Semantic understanding of job requirements
-        -  Balanced recommendations (technical + behavioral)
-        -  Fast retrieval from 377+ assessments
-         ### Powered by:
+        - 🎯 Semantic understanding of job requirements
+        - ⚖️ Balanced recommendations (technical + behavioral)
+        - ⚡ Fast retrieval from 300+ assessments
+        
+        ### Powered by:
         - SentenceTransformers
         - FAISS Vector Search
-        - FastAPI
+        - Streamlit
         """
         )
 
         st.divider()
 
-        # Health check
-        if st.button("Check API Status"):
-            try:
-                response = requests.get(f"{API_URL}/health", timeout=5)
-                if response.status_code == 200:
-                    st.success(" API is running")
-                else:
-                    st.error(" API returned error")
-            except:
-                st.error(" API is not accessible")
+        # System status
+        st.metric("System Status", "🟢 Online")
+        st.metric("Total Assessments", len(engine.catalog) if hasattr(engine, 'catalog') else "N/A")
 
 
 if __name__ == "__main__":
